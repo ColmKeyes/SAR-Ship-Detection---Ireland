@@ -1,0 +1,111 @@
+# SAR Ship Detection - Irish Waters Pipeline
+- Ingest the information from this file, implement the Low-Level Tasks and generate the code that satisfies the High and Mid-Level Objectives.
+
+## High Level Overview
+Develop and deploy a Sentinel-1 SAR ship detection pipeline to identify and catalog surface vessels in Irish coastal waters and exclusive economic zone. The project leverages proven SAR amplitude-based detection techniques including CFAR (Constant False Alarm Rate) algorithms and polarimetric analysis to detect ships across major shipping lanes, fishing areas, and offshore installations around Ireland.
+
+## End State Output/ Visualisation
+This project will assemble and preprocess Sentinel-1 SAR data to detect and catalog ships in Irish waters using amplitude-based detection algorithms. The workflow will generate ship detection masks, confidence scores, and produce a comprehensive Geoparquet catalog with spatial and temporal metadata for maritime surveillance and traffic analysis applications.
+
+## Docs
+- SNAP (Sentinel Application Platform) documentation for SAR processing
+- ASF Search API documentation for Sentinel-1 data discovery
+- ESA SNAPPY Python API documentation
+- CFAR ship detection algorithm references
+- Geoparquet specification for spatial data cataloging
+- AIS (Automatic Identification System) data sources and APIs
+- Irish Maritime Administration shipping lane maps
+
+## High-Level Objectives
+- Build an Ireland-specific Sentinel-1 SAR ship detection pipeline using amplitude-based CFAR algorithms
+- Generate comprehensive ship detection catalogs for Irish coastal waters and EEZ
+- Create a robust Geoparquet database of ship detections with spatial and temporal partitioning
+- Validate ship detections against AIS ground truth data for accuracy assessment
+- Implement false alarm mitigation using contextual and morphological filtering
+
+## Mid-Level Objectives
+- Configure geographic processing for Irish coastal waters bounding box and coordinate systems
+- Implement CFAR detection algorithms optimized for maritime environments
+- Integrate land-sea masking for coastal processing optimization
+- Develop ship wake detection capabilities for enhanced vessel identification
+- Generate partitioned Geoparquet output with comprehensive metadata and processing provenance
+- Create validation framework using AIS data and manual verification
+- Optimize detection parameters for Irish maritime conditions and vessel types
+- Implement multi-temporal analysis for persistent target validation
+
+## Implementation Notes
+- **SNAP Processing**: Use ESA SNAP 8.0+ via SNAPPY with JVM flags: `-Xmx16G -XX:+UseG1GC`
+- **Processing Batches**: 5-10 scenes/batch with checkpointing after each batch
+- **Coordinate Systems**: WGS84 to Irish Grid (EPSG:2157) with <0.5px alignment tolerance
+- **Land-Sea Mask**: High-resolution coastline data resampled to SAR resolution (10m/20m)
+- **CFAR Parameters**: Adaptive window sizing [50x50 to 200x200] with guard cells
+- **Detection Thresholds**: False alarm rate <1e-6, minimum target size >25 pixels
+- **Validation**: AIS cross-reference with spatial-temporal matching (±500m, ±30min)
+- **Output Metadata**: Include processing UUID, SNAP version, timestamp, detection confidence
+- **Success Criteria**: >85% detection rate, <15% false alarms, AIS correlation >0.8
+
+## Low-level Tasks
+    # Order start to finish
+    1. Create 1_generate_s1_catalog.py for Irish waters AOI (bbox: -11.0, 51.0, -5.0, 56.0)
+    2. Set temporal range for target analysis period (configurable date ranges)
+    3. Develop 2_scene_selector.py for optimal SAR scene selection (weather, coverage, quality)
+    4. Source and prepare Irish coastline/land-sea mask (OSI/Marine Institute data)
+    5. Implement land-sea mask alignment and processing functions
+    6. Create sentinel1_ship_detection.py for SNAP-based SAR preprocessing
+    7. Implement CFAR ship detection algorithms with adaptive thresholding
+    8. Add morphological filtering for false alarm reduction
+    9. Develop ship wake detection module for enhanced identification
+    10. Create ship attribute extraction (size, orientation, radar cross-section)
+    11. Implement AIS data integration and validation framework
+    12. Generate Geoparquet catalog with spatial partitioning by maritime zones
+    13. Create detection confidence scoring and quality metrics
+    14. Implement visualization and summary statistics generation
+    15. Create comprehensive processing documentation and user guide
+
+## Implementation Details
+    # Stream of consciousness walkthrough of agent tasks and technical highlights
+    
+    Start with a solid SAR ship detection foundation - we need 1_generate_s1_catalog.py for ASF API scene discovery focused on Irish waters, 2_scene_selector.py for optimal scene selection considering weather and sea state, and sentinel1_ship_detection.py for SNAP-based SAR processing and detection.
+    
+    Geographic focus is Irish coastal waters and EEZ - bounding box approximately (-11.0, 51.0, -5.0, 56.0) covering major shipping lanes including Dublin-Liverpool, Cork-France routes, and fishing areas off the west coast. Smaller area than global coverage so processing should be manageable.
+    
+    SAR ship detection relies on amplitude contrast - ships appear as bright targets against darker sea background. Implement CFAR (Constant False Alarm Rate) detection with adaptive thresholding. Key is balancing detection sensitivity with false alarm rate - maritime environment has various clutter sources (waves, weather, sea ice, oil spills).
+    
+    Land-sea masking is critical - need high-quality Irish coastline data (probably from OSI or Marine Institute) to exclude land-based false alarms. Complex Irish coastline with many islands and inlets requires careful mask preparation and alignment with SAR geometry.
+    
+    SNAP processing chain needs SAR-specific preprocessing: radiometric calibration, speckle filtering (Lee or Refined Lee), terrain correction for coastal areas. This processing focuses on single-scene amplitude optimization without requiring coregistration.
+    
+    CFAR implementation is core algorithm - sliding window approach with guard cells to estimate local sea clutter statistics. Adaptive window sizing based on sea state and resolution. Need to handle edge cases near coastlines and in shipping lanes with multiple targets.
+    
+    False alarm mitigation through morphological filtering - ships have characteristic size/shape signatures. Filter out point targets (likely speckle), very large targets (likely weather), and targets with wrong aspect ratios. Ship wake detection can provide additional validation.
+    
+    AIS integration for ground truth - Irish Coast Guard and Marine Institute provide AIS feeds. Spatial-temporal matching within reasonable tolerances (±500m, ±30min) accounting for AIS transmission delays and GPS accuracy. Not all vessels transmit AIS (fishing boats, military, etc.).
+    
+    Output to Geoparquet with maritime-specific partitioning - by Irish maritime zones (inshore, offshore, EEZ), by vessel size categories, temporal partitioning by month/season. Include rich metadata: detection confidence, RCS estimates, sea state conditions, processing parameters.
+    
+    Libraries: asf_search for data discovery, esa_snappy for SNAP processing, geopandas for spatial operations, pyarrow for Parquet I/O, rasterio for raster processing, scikit-image for morphological operations, numpy/scipy for CFAR algorithms.
+    
+    Key technical challenges: SNAP memory management, CFAR parameter optimization for Irish conditions, AIS data quality and availability, handling complex coastline geometry, weather-related false alarms, small vessel detection limits.
+
+## Tasks (Aka Prompts)
+    # (tasks or steps to give an engineer to complete this)
+    
+    1. **Geographic Configuration**: "Create catalog generation script for Irish waters bounding box (-11.0, 51.0, -5.0, 56.0) with WGS84 to Irish Grid (EPSG:2157) transformation. Ensure <0.5px alignment tolerance at 10m/20m output resolution."
+    
+    2. **SAR Data Selection**: "Implement scene selection prioritizing IW mode, VV+VH polarization, low wind conditions (<15 m/s), and minimal precipitation. Target 6-12 day revisit intervals."
+    
+    3. **Land-Sea Masking**: "Source Irish coastline data from OSI, create high-resolution land-sea mask, and implement alignment with SAR geometry including quality assurance checks."
+    
+    4. **SAR Preprocessing**: "Configure SNAP with `-Xmx16G -XX:+UseG1GC`. Implement radiometric calibration, Lee speckle filtering, and terrain correction. Process in 5-10 scene batches."
+    
+    5. **CFAR Detection**: "Implement adaptive CFAR with sliding window [50x50 to 200x200], guard cells, and false alarm rate <1e-6. Optimize for Irish maritime conditions."
+    
+    6. **False Alarm Mitigation**: "Apply morphological filtering for ship-like targets (25-1000 pixels), aspect ratio constraints, and contextual analysis near shipping lanes."
+    
+    7. **AIS Integration**: "Develop AIS data ingestion and spatial-temporal matching (±500m, ±30min). Create validation metrics and detection performance assessment."
+    
+    8. **Geoparquet Output**: "Create spatially partitioned catalog by maritime zones with detection metadata: confidence, RCS, size, orientation, processing UUID, and timestamp."
+    
+    9. **Validation Framework**: "Implement detection accuracy assessment with >85% detection rate target, <15% false alarm rate, and >0.8 AIS correlation coefficient."
+    
+    10. **Documentation**: "Create comprehensive user guide, API documentation, and processing workflow diagrams with version control and change tracking."
