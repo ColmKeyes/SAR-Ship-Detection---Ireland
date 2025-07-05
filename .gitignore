@@ -1,3 +1,146 @@
-/Project_Planning_Summary.md
-/Spec Prompt and Plan Template.txt
-/sar_ship_detection_agent_spec.txt
+# SAR Ship Detection - Ireland: Git Ignore File
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Data directories (large files)
+data/raw/
+data/processed/
+data/results/
+*.zip
+*.tar.gz
+*.tgz
+
+# Keep structure but ignore contents
+data/catalogs/*
+!data/catalogs/.gitkeep
+data/selected_scenes/*
+!data/selected_scenes/.gitkeep
+
+# Log files
+logs/*.log
+*.log
+
+# SNAP temporary files
+.snap/
+snap-temp/
+
+# SAR data files (typically large)
+*.SAFE/
+*.dim
+*.data/
+*.tif
+*.tiff
+*.nc
+*.h5
+*.hdf5
+
+# Parquet files (can be large)
+*.parquet
+*.pq
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+.temp/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Authentication files
+credentials.json
+auth.json
+*.pem
+*.key
+
+# Documentation build
+docs/_build/
+docs/build/
+
+# Test coverage
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Large result files
+*.png
+*.jpg
+*.jpeg
+*.pdf
+results/
+outputs/
+
+# Keep empty directories with .gitkeep
+!.gitkeep
+
+# Planning and spec files
+sar_ship_detection_agent_spec.txt
+SAR_Ship_Detection_Ireland_Spec.txt
+Project_Planning_Summary.md
+"Spec Prompt and Plan Template.txt"

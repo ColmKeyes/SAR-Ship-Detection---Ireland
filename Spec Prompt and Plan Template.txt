@@ -1,0 +1,97 @@
+# Storm Eowyn Forest Loss Ireland - InSAR Analysis Pipeline
+- Ingest the information from this file, implement the Low-Level Tasks and generate the code that satisfies the High and Mid-Level Objectives.
+
+## High Level Overview
+Adapt and deploy an existing Sentinel-1 InSAR coherence processing pipeline to quantify forest cover loss in Ireland caused by Storm Eowyn in January 2025. The project leverages proven InSAR coherence techniques to detect forest disturbance by analyzing temporal decorrelation in radar backscatter before and after the storm event.
+
+## End State Output/ Visualisation
+This project will assemble and preprocess Sentinel-1 InSAR data to quantify forest cover loss in Ireland caused by Storm Eowyn in January 2025. Using the existing "Sentinel-1 Coherence Pipeline" project folder the workflow will generate a time-series stack of coherence maps, align and crop a forest‐extent mask, and produce a Geoparquet catalog for easy downstream change-detection analysis.
+
+## Docs
+- SNAP (Sentinel Application Platform) documentation for InSAR processing
+- ASF Search API documentation for Sentinel-1 data discovery
+- ESA SNAPPY Python API documentation
+- Geoparquet specification for spatial data cataloging
+- Storm Eowyn impact reports and meteorological data
+
+## High-Level Objectives
+- Build an Ireland-specific Sentinel-1 InSAR coherence processing pipeline adapted from existing Borneo forest disturbance codebase
+- Generate pre/post-storm coherence time series for quantitative forest loss assessment
+- Create a comprehensive Geoparquet catalog of forest change detection results with spatial and temporal partitioning
+- Validate forest loss detection against known Storm Eowyn impact areas
+
+## Mid-Level Objectives
+- Adapt geographic configuration from Borneo to Ireland bounding box and coordinate systems
+- Modify temporal parameters to focus on Storm Eowyn timeframe (December 2024 - February 2025)
+- Integrate Irish forest extent mask for spatial filtering of coherence analysis
+- Implement coherence-based change detection algorithms for forest loss quantification
+- Generate partitioned Geoparquet output with comprehensive metadata and processing provenance
+- Create validation framework using optical imagery and reported storm damage locations
+- Optimize processing parameters for Irish forest characteristics and storm impact detection
+
+## Implementation Notes
+- **SNAP Processing**: Use ESA SNAP 8.0+ via SNAPPY with JVM flags: `-Xmx16G -XX:+UseG1GC`
+- **Processing Batches**: 10 scenes/batch with checkpointing after each
+- **Coordinate Systems**: WGS84 to Irish Grid (EPSG:2157) with <0.5px alignment tolerance
+- **Forest Mask**: Corine Land Cover 2018 resampled to 20m using bilinear interpolation
+- **Coherence Parameters**: Window size [3,12] with >0.3 quality threshold
+- **Validation**: Sentinel-2/MSI cross-check with confusion matrix metrics
+- **Output Metadata**: Include processing UUID, SNAP version, timestamp, checksum
+- **Success Criteria**: >90% detection rate, <10% false positives, >80% valid pixels
+
+## Low-level Tasks
+    # Order start to finish
+    1. Modify 1_generate_s1_catalog.py for Ireland AOI (bbox: -10.5, 51.4, -5.4, 55.4)
+    2. Update temporal range to Storm Eowyn period (2024-11-01 to 2025-02-28)
+    3. Adapt 2_scene_pair_selector.py for pre/post-storm pair selection strategy
+    4. Source and prepare Irish forest extent mask (Corine/NFI data)
+    5. Implement forest mask alignment and cropping functions
+    6. Modify sentinel1slc.py coherence processing for Ireland-specific parameters
+    7. Create forest-masked coherence time series generation
+    8. Implement coherence change detection algorithms (pre/post-storm differencing)
+    9. Add statistical thresholding for forest loss identification
+    10. Create Geoparquet catalog generation with spatial partitioning
+    11. Implement validation framework using optical imagery cross-reference
+    12. Generate summary statistics and visualization outputs
+    13. Create comprehensive processing documentation and user guide
+    14. Remove Borneo-specific code and update all file paths/configurations
+
+## Implementation Details
+    # Stream of consciousness walkthrough of agent tasks and technical highlights
+    
+    Start by examining the existing pipeline structure - we have a solid foundation with 1_generate_s1_catalog.py for ASF API scene discovery, 2_scene_pair_selector.py for optimal pair selection, and sentinel1slc.py for SNAP-based InSAR processing. The key is adapting these from tropical Borneo to temperate Ireland.
+    
+    First priority is geographic adaptation - change the bounding box from Borneo (108.0, -4.5, 119.0, 7.0) to Ireland (-10.5, 51.4, -5.4, 55.4). This is smaller area so processing should be faster. Update all coordinate system references and ensure proper WGS84 handling.
+    
+    Temporal focus is critical - Storm Eowyn hit Ireland in January 2025, so we need pre-storm baseline (November-December 2024) and post-storm assessment (January-February 2025). Modify the date ranges in catalog generation and ensure pair selection prioritizes pre/post-storm combinations.
+    
+    Forest mask integration is new functionality - need to source Irish forest data (probably Corine Land Cover 2018 or Irish National Forest Inventory), implement spatial alignment with Sentinel-1 coherence products, and create cropping functions. This requires careful coordinate system handling and resampling to match InSAR product resolution.
+    
+    The SNAP processing chain in sentinel1slc.py is solid but needs parameter tuning for Irish conditions. Forest coherence characteristics differ from tropical forests - Irish forests are deciduous/coniferous mix, different canopy structure, seasonal effects. May need to adjust coherence window sizes and processing parameters.
+    
+    Change detection is the core innovation - implement algorithms to compare pre/post-storm coherence, identify significant coherence loss indicating forest damage. Need statistical thresholding, spatial filtering, and confidence metrics. Cross-validate with optical imagery where available.
+    
+    Output to Geoparquet is modern best practice - implement spatial partitioning (probably by county or grid cells), temporal partitioning (by acquisition date), comprehensive metadata including processing parameters, baselines, quality metrics. This enables efficient downstream analysis.
+    
+    Libraries: asf_search for data discovery, esa_snappy for SNAP processing, geopandas for spatial operations, pyarrow for Parquet I/O, rasterio for raster processing, numpy/pandas for data manipulation. All existing in current codebase.
+    
+    Key technical challenges: SNAP memory management (notorious for memory leaks), coordinate system transformations, forest mask alignment accuracy, coherence parameter optimization for Irish conditions, validation data sourcing.
+
+## Tasks (Aka Prompts)
+    # (tasks or steps to give an engineer to complete this)
+    
+    1. **Geographic Configuration**: "Modify the catalog generation script to use Ireland's bounding box (-10.5, 51.4, -5.4, 55.4) with WGS84 to Irish Grid (EPSG:2157) transformation. Ensure <0.5px alignment tolerance at 20m output resolution."
+    
+    2. **Temporal Adaptation**: "Set catalog generation for November 2024 - February 2025. Prioritize pre-storm (Nov-Dec 2024) to post-storm (Jan-Feb 2025) pairs with max 200m perpendicular baseline."
+    
+    3. **Forest Mask Integration**: "Source Corine Land Cover 2018 forest mask, resample to 20m using bilinear interpolation, and implement alignment with QA checks."
+    
+    4. **InSAR Processing**: "Configure SNAP with `-Xmx16G -XX:+UseG1GC`. Process in 10-scene batches using [3,12] window size. Tag pixels with coherence <0.3 as invalid."
+    
+    5. **Change Detection**: "Implement pre/post-storm differencing with >90% detection target. Apply statistical thresholds for <10% false positives."
+    
+    6. **Geoparquet Output**: "Create spatially partitioned catalog with processing UUID, SNAP version, timestamp, and checksum metadata."
+    
+    7. **Validation**: "Cross-validate with Sentinel-2/MSI using confusion matrix. Ensure >80% valid pixels per coherence map."
+    
+    8. **Documentation**: "Remove Borneo code, update paths, and document all changes with version control."
